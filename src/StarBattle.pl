@@ -33,7 +33,7 @@ boardSize(S):-
 
 makeBoard(B):-
         boardSize(S),
-        fillBoard(S, Rows, 0),
+        fillBoard(S, Rows, 'A'),
         fillBoard(S, B, Rows).
 
 %makeDivs(S, B, Nb):-
@@ -69,17 +69,9 @@ fillBoard(S, [V|Tail], V):-
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-printElement(0, ' e ').
+printElement('A', '   ').
 printELement(1, ' o ').
 
-printBoard(B):-
-        length(B,S),
-        write('        '),
-        F is S+2,
-        printBorder(0,F),nl,
-        printBoard(B,0,S),
-        write('        '),
-        printBorder(0,F).
 
 printBorder(0,S):-
         Nh is 1,
@@ -93,9 +85,24 @@ printBorder(H,S):-
         Nh is H+1,
         write('XXXX'),
         printBorder(Nh,S).
-                
+      
+          
+printBoard(B):-
+        length(B,S),
+        write('        '),
+        F is S+2,
+        printBorder(0,F),nl,
+        printBoard(B,0,S),
+        write('        '),
+        printBorder(0,F).
 
-printBoard([],S,S).
+printBoard([X|_], H, S):-
+        H>S-2,
+        write('        '),
+        write('X'),
+        printLine(X, 0, S),
+        write('X'),nl.
+        
 printBoard([X|Nb], H, S):-
         Nh is H+1,
         write('        '),
@@ -107,6 +114,7 @@ printBoard([X|Nb], H, S):-
         printDiv(0,S),
         write('X'),nl,
         printBoard(Nb,Nh,S).
+
 
 printLine([],S,S).
 printLine([X|Nb],H,S):-
@@ -124,6 +132,7 @@ printLine([X|Nb], H, S):-
         write('|'),
         printLine(Nb,Nh,S). 
 
+
 printDiv(S,S).
 printDiv(0,S):-
         Nh is 1,
@@ -134,11 +143,3 @@ printDiv(H,S):-
         Nh is H+1,
         write('|---'),
         printDiv(Nh,S).
-        
-        
-        
-        
-        
-        
-
-
