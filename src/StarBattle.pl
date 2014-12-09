@@ -6,16 +6,58 @@
 
 :- use_module(library(clpfd)).
 :-use_module(library(random)).
+:-use_module(library(lists)).
 :-consult(boards).
 
 starBattle:-init.
 
 init:-
         chooseBoard(B),
-        printBoard(B).
-
+        printBoard(B),
+        write('How many stars?'), %mudar output
+        read(Stars),
+        rules(B,Stars,Cb),
+        printBoard(Cb).
+        
 chooseBoard(B):-
         board1(B).
+
+checkKeys([],Y,_Stars,Ny):- Ny is Y.
+checkKeys([K|Tail],Y,Stars,Ny):-
+        C is 0,
+        checkElem([K|Tail], K, C, Nc),
+        Nc =\= Stars, !,
+        Ny = 1
+        ;
+        checkKeys(Tail, Y, Stars,Ny).
+        
+
+checkElem([],_E,C,N):-N is C.
+checkElem([K|Tail],E,C,N):-
+        E =:= K,!,
+        Nc is C+1,
+        checkElem(Tail, E,Nc,N)
+        ;
+        checkElem(Tail,E,C,N).
+        
+               
+
+rules(B,Stars,_Cb):-
+        length(B,S),
+        domain(lineKey, 1, S),
+        domain(colKey, 1, S),
+        Y1 is 0, Y2 is 0,
+        checkKeys(lineKey,Y1,Stars,Ny1),
+        checkKeys(colKey,Y2,Stars,Ny2),
+        Ny1 =:=0,
+        Ny2 =:=0.
+        
+          
+
+
+
+
+
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -23,7 +65,6 @@ chooseBoard(B):-
 
 printStar(' O ').
 printSpace('   ').
-
 printElement(X,Y):-
         X =:= 0,!,
           printStar(Y) 
@@ -39,14 +80,12 @@ printBoard(B):-
         printBoard(B,0,S),
         write('        '),
         printBorder(0,F).
-
 printBoard([X|_], H, S):-
         H>S-2,
         write('        '),
         write('X'),
         printLine(X, 0, 1, S),
-        write('X'),nl.
-        
+        write('X'),nl.       
 printBoard([X|Nb], H, S):-
         Nh is H+1,
         write('        '),
@@ -59,22 +98,18 @@ printBoard([X|Nb], H, S):-
         write('X'),nl,
         printBoard(Nb,Nh,S).
 
-
 printBorder(0,S):-
         Nh is 1,
         write('X'),
         printBorder(Nh,S).
-
 printBorder(H,S):-
         H>S-2.
-
 printBorder(H,S):-
         Nh is H+1,
         write('XXXX'),
         printBorder(Nh,S).
       
 printLine([], S, _O, S).
-
 printLine([X|Nb], H, _O, S):-
         H<1,
         Nh is H+1,
@@ -101,60 +136,7 @@ printDiv(0,S):-
         Nh is 1,
         write('---'),
         printDiv(Nh,S).
-
 printDiv(H,S):-
         Nh is H+1,
         write('|---'),
         printDiv(Nh,S).
-
-
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-
-%makeBoard(B):-
-%        fillBoard(S, Rows, 'A'),
-%        fillBoard(S, B, Rows).                 
-%
-%fillBoard(0, [], _).
-%fillBoard(S, [V|Tail], V):-
-%        S>0,
-%        Ns is S-1,
-%        fillBoard(Ns, Tail, V).
-%       
-%boardSize(S):-
-%        write('What size do you want the board game to have? (it must be between 2 and 20)'), nl,
-%        read(Size),
-%        (
-%           integer(Size),
-%           Size>2, Size<20,!,
-%           S=Size
-%        ;
-%           write('invalid size!'),
-%           boardSize(S)
-%        ).
-%makeBoard(Nb):-
-%        boardSize(S),
-%        fillBoard(S, Rows, 0),
-%        fillBoard(S, B, Rows),
-%        makeDivs(S, B, New),
-%        Nb=New.
-%makeDivs(S, B, Nb):-
-%        E #= (S * S),
-%        div(S, B, 0, E, 0, 0, Nb).
-%
-%div(_,_,6,0,_).
-%div(_S, B, 5, E, X, Y, Nb):-
-%        makeRandDiv(B, E, 5, X, Y, Nb).
-%div(S, B, C, E, X, Y, Nb):-
-%        Nc #= (C+1),
-%        R = (E - (S-C)),
-%        random(1,R+1,F),
-%        makeRandDiv(B, F, Nc, X, Y, Nb),
-%        Ne = E-R,
-%        div(S, B, Nc, Ne, Nb).
-%
-%makeRandDiv(B, F, Nc, Nb):-
