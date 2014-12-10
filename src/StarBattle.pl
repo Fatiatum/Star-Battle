@@ -14,7 +14,7 @@ starBattle:-init.
 init:-
         chooseBoard(B),
         printBoard(B),
-        write('How many stars?'), %mudar output
+        nl,write('How many stars?'),nl, %mudar output
         read(Stars),
         rules(B,Stars,Cb),
         printBoard(Cb).
@@ -31,33 +31,61 @@ checkKeys([K|Tail],Y,Stars,Ny):-
         ;
         checkKeys(Tail, Y, Stars,Ny).
         
-
 checkElem([],_E,C,N):-N is C.
 checkElem([K|Tail],E,C,N):-
-        E =:= K,!,
+        E == K,!,
         Nc is C+1,
         checkElem(Tail, E,Nc,N)
         ;
         checkElem(Tail,E,C,N).
-        
-               
 
-rules(B,Stars,_Cb):-
+%tested
+add(X,[],[X]).
+add(X,[A|L],[A|L1]):-
+ add(X,L,L1).
+
+%tested
+divKey(_B,[],_Stars,DivKey,K):-K = DivKey.
+divKey([B|Board], LineKey, Stars, DivKey,Div):-
+        getDiv(B, LineKey, Tail, Stars,0,[],K),
+        append(DivKey,K,Key),
+        divKey(Board,Tail,Stars,Key,Div).
+
+%tested
+getDiv(_B, Key,Tail,Stars,Stars,DivKey, K):-K = DivKey,Tail = Key.
+getDiv(B, [T|LineKey], Tail, Stars, H, DivKey,K):-
+        element(T,B,E),
+        add(E,DivKey,Key),
+        Nh is H+1,
+        getDiv(B,LineKey,Tail,Stars,Nh,Key,K).
+
+                    
+rules(B,Stars,Key):-
         length(B,S),
-        domain(lineKey, 1, S),
-        domain(colKey, 1, S),
-        Y1 is 0, Y2 is 0,
-        checkKeys(lineKey,Y1,Stars,Ny1),
-        checkKeys(colKey,Y2,Stars,Ny2),
-        Ny1 =:=0,
-        Ny2 =:=0.
+        length(LineKey,S),
+        length(ColKey,S),
+        length(DivKey,S),
+        domain(LineKey, 1, S),
+        domain(ColKey, 1, S),
+        domain(DivKey,1,S),
+        write('>'),write(LineKey),
+        Y1 is 0, Y2 is 0, Y3 is 0,
+        checkKeys(LineKey,Y1,Stars,Ny1),
+        write('-->'),write(Ny1),
+        Ny1 ==0,
+        checkKeys(ColKey,Y2,Stars,Ny2),
+        write('-->'),write(Ny2),
+        Ny2 ==0,
+        divKey(B,LineKey,Stars,[],DKey),
+        checkKeys(DKey,Y3,Stars,Ny3),
+        write('-->'),write(Ny3),
+        Ny3 ==0,
+        labeling([],LineKey),
+        labeling([],ColKey),
+        labeling([],DivKey),
+        write(ColKey),
+        Key = LineKey.
         
-          
-
-
-
-
-
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
