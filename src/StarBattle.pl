@@ -13,21 +13,35 @@ starBattle:-init.
 
 init:-
         chooseBoard(B),
-        printBoard(B),
+        printBoard(B,B),
         nl,write('How many stars?'),nl, %mudar output
         read(Stars),
-        rules(B,Stars,[]).
-        %printBoard(Cb).
+        rules(B,Stars,Key),
+        write(Key),nl,nl,
+        changeBoard(B,B,Stars,0,Key,Nb),
+        printBoard(Nb,B).
+
+changeBoard(B,_Board,_Stars,_H,[],Board):-Board=B.
+changeBoard(B,[H|Tail],Stars,C,Key,Board):-
+        Nc is C+1,
+        changeRow(H,Stars,0,Key,Rest,NLine),
+        replace(NLine, B, Nc, Nb),
+        changeBoard(Nb,Tail,Stars,Nc,Rest,Board).
+
+changeRow(Line,Stars,Stars,Key,Rest,NLine):- NLine=Line,Rest=Key.
+changeRow(Line,Stars,H,[X|Rest],R,Nline):-
+        Nh is H+1,
+        P is 0,
+        replace(P,Line,X,Row), %change piece in row
+        changeRow(Row,Stars,Nh,Rest,R,Nline).
+
+replace(P, [_|List], 1, [P|List]).
+replace(P, [Head|List], X, [Head|Rest]):- 
+        X1 is X-1,
+        replace(P,List,X1,Rest).  
         
 chooseBoard(B):-
         board0(B).
-
-checkList(List,Size,Size,N):-
-        exactly(Size,List,N).
-checkList(List,Size,H,N):-
-        exactly(H,List,N),
-        Nh is H+1,
-        checkList(List,Size,Nh,N).
         
 exactly(_,[],0).
 exactly(X,[Y|L],N):-
@@ -35,25 +49,35 @@ exactly(X,[Y|L],N):-
         N #= M+B,
         exactly(X,L,M).
 
-%tested
 add(X,[],[X]).
 add(X,[A|L],[A|L1]):-
         add(X,L,L1).
 
-%tested
 divKey(_B,[],_Stars,DivKey,K):-K = DivKey.
 divKey([B|Board], LineKey, Stars, DivKey,Div):-
         getDiv(B, LineKey, Tail, Stars,0,[],K),
         append(DivKey,K,Key),
         divKey(Board,Tail,Stars,Key,Div).
 
-%tested
 getDiv(_B, Key,Tail,Stars,Stars,DivKey, K):-K = DivKey,Tail = Key.
 getDiv(B, [T|LineKey], Tail, Stars, H, DivKey,K):-
         element(T,B,E),
         add(E,DivKey,Key),
         Nh is H+1,
         getDiv(B,LineKey,Tail,Stars,Nh,Key,K).
+
+mult([],_Stars,_H,SubK):-
+        multStars(SubK).
+mult([_X|R],Stars,Stars,SubK):-
+        multStars(SubK),
+        mult(R,Stars,0,[]).    
+mult([X|R],Stars,H,SubK):-
+        Nh is H+1,
+        add(X,SubK,Sub),
+        mult(R,Stars,Nh,Sub).
+        
+multStars(SubK):-
+        all_different(SubK).
 
                     
 rules(B,Stars,Key):-
@@ -67,34 +91,22 @@ rules(B,Stars,Key):-
         domain(DivKey,1,S),
         divKey(B,LineKey,Stars,[],DivKey),
         checkList(LineKey,S,1,Stars),
+        mult(LineKey, Stars, 1, []),
         checkList(ColKey,S,1,Stars),
         checkList(DivKey, S,1,Stars),
         labeling([],LineKey),
         labeling([],ColKey),
         labeling([],DivKey),
-        Key=LineKey,
-        write(LineKey),write('---'),write(ColKey),write('---'),write(DivKey).
-        
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%test
-
-test(B,LineKey):-
-        length(LineKey, 8),
-        domain(LineKey, 1,4),
-        checkList(LineKey,4,1,2),
-        divKey(B,LineKey,1,[],Key),
-        checkList(Key,4,1,2),
-        labeling([],LineKey),
-        labeling([],Key),
-        write(LineKey),write('----'),write(Key).
+        Key=LineKey.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%Display
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-printStar(' O ').
+
+printStar(' * ').
 printSpace('   ').
 printElement(X,Y):-
         X =:= 0,!,
@@ -103,21 +115,36 @@ printElement(X,Y):-
           printSpace(Y)
         .
 
-printBoard(B):-
+boardDiv([R|_Rest],Line,Key):-
+        div(R,Line,[],K),
+        Key=K.
+                                         
+div([],[],Key,FKey):-FKey=Key.
+div([R|Rest],[X|Tail],Key,FKey):-
+        R==X,!,
+        F = 0,
+        add(F,Key,K),
+        div(Rest,Tail,K,FKey)
+        ;
+        F = 1,
+        add(F,Key,K),
+        div(Rest,Tail,K,FKey).
+        
+printBoard(B,NB):-
         length(B,S),
         write('        '),
         F is S+2,
         printBorder(0,F),nl,
-        printBoard(B,0,S),
+        printBoard(B,NB,0,S),
         write('        '),
         printBorder(0,F).
-printBoard([X|_], H, S):-
+printBoard([X|_],_B, H, S):-
         H>S-2,
         write('        '),
         write('X'),
         printLine(X, 0, 1, S),
         write('X'),nl.       
-printBoard([X|Nb], H, S):-
+printBoard([X|Nb],[X1|Nb1], H, S):-
         Nh is H+1,
         write('        '),
         write('X'),
@@ -125,9 +152,10 @@ printBoard([X|Nb], H, S):-
         write('X'),nl,
         write('        '),
         write('X'),
-        printDiv(0,S),
+        boardDiv(Nb1,X1,D),
+        printDiv(0,S,D),
         write('X'),nl,
-        printBoard(Nb,Nh,S).
+        printBoard(Nb,Nb1,Nh,S).
 
 printBorder(0,S):-
         Nh is 1,
@@ -151,23 +179,39 @@ printLine([X|Nb], H, O, S):-
         Nh is H+1,
         printElement(X,Y),
         (
-        O #\= X,!,
-        write('X'),
+        O == X,!,
+        write('|'),
         write(Y),
         printLine(Nb,Nh,X,S)
         ;
+        X == 0,!,
         write('|'),
+        write(Y),
+        printLine(Nb,Nh,X,S)
+        ;
+        write('X'),
         write(Y),
         printLine(Nb,Nh,X,S)
         ). 
 
-
-printDiv(S,S).
-printDiv(0,S):-
+printDiv(S,S,_D).
+printDiv(0,S,[D|Rest]):-
+        D == 0,!,
         Nh is 1,
         write('---'),
-        printDiv(Nh,S).
-printDiv(H,S):-
+        printDiv(Nh,S,Rest).
+printDiv(0,S,[D|Rest]):-
+        D == 1,!,
+        Nh is 1,
+        write('XXX'),
+        printDiv(Nh,S,Rest).
+printDiv(H,S,[D|Rest]):-
+        D == 0,!,
         Nh is H+1,
         write('|---'),
-        printDiv(Nh,S).
+        printDiv(Nh,S,Rest).
+printDiv(H,S,[D|Rest]):-
+        D == 1,!,
+        Nh is H+1,
+        write('|XXX'),
+        printDiv(Nh,S,Rest).
