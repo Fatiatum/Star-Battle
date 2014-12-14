@@ -16,33 +16,29 @@ init:-
         printBoard(B),
         nl,write('How many stars?'),nl, %mudar output
         read(Stars),
-        rules(B,Stars,Cb),
-        printBoard(Cb).
+        rules(B,Stars,[]).
+        %printBoard(Cb).
         
 chooseBoard(B):-
-        board1(B).
+        board0(B).
 
-checkKeys([],Y,_Stars,Ny):- Ny is Y.
-checkKeys([K|Tail],Y,Stars,Ny):-
-        C is 0,
-        checkElem([K|Tail], K, C, Nc),
-        Nc =\= Stars, !,
-        Ny = 1
-        ;
-        checkKeys(Tail, Y, Stars,Ny).
+checkList(List,Size,Size,N):-
+        exactly(Size,List,N).
+checkList(List,Size,H,N):-
+        exactly(H,List,N),
+        Nh is H+1,
+        checkList(List,Size,Nh,N).
         
-checkElem([],_E,C,N):-N is C.
-checkElem([K|Tail],E,C,N):-
-        E == K,!,
-        Nc is C+1,
-        checkElem(Tail, E,Nc,N)
-        ;
-        checkElem(Tail,E,C,N).
+exactly(_,[],0).
+exactly(X,[Y|L],N):-
+        X #= Y #<=> B,
+        N #= M+B,
+        exactly(X,L,M).
 
 %tested
 add(X,[],[X]).
 add(X,[A|L],[A|L1]):-
- add(X,L,L1).
+        add(X,L,L1).
 
 %tested
 divKey(_B,[],_Stars,DivKey,K):-K = DivKey.
@@ -62,30 +58,37 @@ getDiv(B, [T|LineKey], Tail, Stars, H, DivKey,K):-
                     
 rules(B,Stars,Key):-
         length(B,S),
-        length(LineKey,S),
-        length(ColKey,S),
-        length(DivKey,S),
+        Size is S*Stars,
+        length(LineKey,Size),
+        length(ColKey,Size),
+        length(DivKey,Size),
         domain(LineKey, 1, S),
         domain(ColKey, 1, S),
         domain(DivKey,1,S),
-        write('>'),write(LineKey),
-        Y1 is 0, Y2 is 0, Y3 is 0,
-        checkKeys(LineKey,Y1,Stars,Ny1),
-        write('-->'),write(Ny1),
-        Ny1 ==0,
-        checkKeys(ColKey,Y2,Stars,Ny2),
-        write('-->'),write(Ny2),
-        Ny2 ==0,
-        divKey(B,LineKey,Stars,[],DKey),
-        checkKeys(DKey,Y3,Stars,Ny3),
-        write('-->'),write(Ny3),
-        Ny3 ==0,
+        divKey(B,LineKey,Stars,[],DivKey),
+        checkList(LineKey,S,1,Stars),
+        checkList(ColKey,S,1,Stars),
+        checkList(DivKey, S,1,Stars),
         labeling([],LineKey),
         labeling([],ColKey),
         labeling([],DivKey),
-        write(ColKey),
-        Key = LineKey.
+        Key=LineKey,
+        write(LineKey),write('---'),write(ColKey),write('---'),write(DivKey).
         
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%test
+
+test(B,LineKey):-
+        length(LineKey, 8),
+        domain(LineKey, 1,4),
+        checkList(LineKey,4,1,2),
+        divKey(B,LineKey,1,[],Key),
+        checkList(Key,4,1,2),
+        labeling([],LineKey),
+        labeling([],Key),
+        write(LineKey),write('----'),write(Key).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
